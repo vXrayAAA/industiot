@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IndústIoT — Monitoramento Energético</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F5F7; --surface:#FFFFFF; --ink:#1A1D21; --muted:#697077; --line:#E1E4E8;
+  --panel:#16191E; --panel-ink:#C9CED4; --panel-line:#2A2F36;
+  --accent:#E8590C; --ok:#2F9E44; --warn:#F08C00; --crit:#E03131;
+  --ok-bg:#EBFBEE; --warn-bg:#FFF4E0; --crit-bg:#FFEBEB;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+.mono{font-family:'IBM Plex Mono',monospace}
+button{font-family:inherit;cursor:pointer}
+.screen{display:none}
+.screen.active{display:block}
+
+/* ===== LOGIN ===== */
+#login.active{display:flex;min-height:100vh;align-items:center;justify-content:center;background:var(--panel)}
+.login-card{background:var(--surface);border-radius:14px;padding:40px;width:380px;max-width:92vw}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.brand-mark{width:36px;height:36px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-family:'IBM Plex Mono',monospace;font-size:15px}
+.brand h1{font-size:22px;font-weight:700;letter-spacing:-0.3px}
+.brand h1 span{color:var(--accent)}
+.login-card p.sub{color:var(--muted);margin-bottom:26px;font-size:13px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.field input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#FAFBFC}
+.field input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:8px;border:none;font-weight:600;font-size:13.5px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#D6500A}
+.btn-primary:disabled{background:#CBD2D9;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn-ghost:hover{background:#F0F1F3}
+.btn-crit{background:var(--crit);color:#fff}
+.btn-crit:hover{background:#C42727}
+.btn-crit:disabled{background:#CBD2D9;cursor:not-allowed}
+.btn-sm{padding:6px 12px;font-size:12.5px}
+.login-foot{margin-top:16px;font-size:12px;color:var(--muted);line-height:1.6}
+.login-error{color:var(--crit);font-size:12.5px;margin-top:10px;min-height:18px}
+
+/* ===== SHELL ===== */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--panel);color:var(--panel-ink);padding:20px 12px;display:flex;flex-direction:column;flex-shrink:0}
+.sidebar .brand{padding:0 10px;margin-bottom:28px}
+.sidebar .brand h1{font-size:17px;color:#fff}
+.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#5B636C;padding:0 10px;margin:14px 0 6px}
+.nav-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;color:var(--panel-ink);padding:10px;border-radius:8px;font-size:13.5px;font-weight:500;margin-bottom:2px}
+.nav-item:hover{background:var(--panel-line);color:#fff}
+.nav-item .badge{margin-left:auto;background:var(--crit);color:#fff;font-size:11px;font-weight:600;border-radius:99px;padding:1px 7px}
+.sidebar-foot{margin-top:auto;padding:12px 10px;border-top:1px solid var(--panel-line);font-size:12px;display:flex;align-items:center;gap:10px}
+.avatar{width:30px;height:30px;border-radius:50%;background:#3B434C;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;font-size:12px}
+.main{flex:1;padding:28px 32px;min-width:0}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.page-head h2{font-size:21px;font-weight:700;letter-spacing:-0.3px}
+.page-head .crumb{font-size:12px;color:var(--muted);margin-bottom:4px}
+
+/* ===== COMPONENTS ===== */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.kpi .k-label{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:6px}
+.kpi .k-value{font-size:26px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-0.5px}
+.kpi .k-delta{font-size:12px;margin-top:4px;font-weight:500;color:var(--muted)}
+
+.tag-plate{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;border:1.5px solid var(--ink);border-radius:4px;padding:2px 8px;background:#FFFDF5;letter-spacing:.5px;display:inline-block}
+
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:99px;padding:3px 10px}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.s-ok{background:var(--ok-bg);color:var(--ok)}
+.s-warn{background:var(--warn-bg);color:var(--warn)}
+.s-crit{background:var(--crit-bg);color:var(--crit)}
+.s-muted{background:#F0F1F3;color:var(--muted)}
+
+.grid-machines{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:22px}
+.m-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.m-card .m-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.m-card h3{font-size:14.5px;font-weight:600;margin-bottom:2px}
+.m-card .m-sub{font-size:12px;color:var(--muted);margin-bottom:10px}
+.m-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px}
+.m-meta b{color:var(--ink);font-weight:600}
+.m-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:22px}
+.section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);text-align:left;padding:10px 12px;background:#FAFBFC;border-bottom:1px solid var(--line)}
+td{padding:11px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.empty{color:var(--muted);font-size:13px;padding:14px 12px}
+
+.pager{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:12.5px;color:var(--muted)}
+
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
+.form-row input{padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;background:#FAFBFC;width:100%}
+.form-row input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+
+#toast{position:fixed;bottom:24px;right:24px;max-width:420px;background:var(--panel);color:#fff;border-radius:10px;padding:14px 18px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.25);display:none;z-index:99;line-height:1.5}
+#toast.show{display:block}
+#toast.toast-erro{background:var(--crit)}
+#toast.toast-ok{background:var(--ok)}
+</style>
+</head>
+<body>
+
+<!-- ===== TELA DE LOGIN ===== -->
+<div id="login" class="screen active">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-mark">∿</div>
+      <h1>Indúst<span>IoT</span></h1>
+    </div>
+    <p class="sub">Monitoramento de eficiência energética da planta</p>
+    <div class="field">
+      <label>Usuário</label>
+      <input id="inp-usuario" value="rodrigo.m" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input id="inp-senha" type="password" value="IndustIoT@2026" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="fazerLogin()">Entrar na plataforma</button>
+    <div class="login-error" id="login-erro"></div>
+    <div class="login-foot">
+      <b>Gestor:</b> rodrigo.m / IndustIoT@2026<br>
+      <b>Operador:</b> operador.l2 / Operador@2026 <span style="color:#A6ADB4">(sem permissão de comando)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="app" class="screen">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">∿</div>
+        <h1>Indúst<span style="color:var(--accent)">IoT</span></h1>
+      </div>
+      <div class="nav-label">Operação</div>
+      <button class="nav-item" onclick="carregarTudo()">⟳ &nbsp;Atualizar dados</button>
+      <button class="nav-item" onclick="document.getElementById('sec-alertas').scrollIntoView({behavior:'smooth'})">
+        ⚠ &nbsp;Alertas <span class="badge" id="badge-alertas" style="display:none">0</span>
+      </button>
+      <div class="sidebar-foot">
+        <div class="avatar" id="user-avatar">?</div>
+        <div>
+          <div id="user-nome" style="color:#fff;font-weight:600"></div>
+          <div id="user-role" style="font-size:11px"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--panel-ink);border-color:var(--panel-line)" onclick="sair()">Sair</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <div class="crumb">Metalúrgica SP · Unidade Osasco</div>
+          <h2>Visão geral da planta</h2>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="k-label">Máquinas monitoradas</div><div class="k-value" id="kpi-maquinas">—</div><div class="k-delta" id="kpi-maquinas-sub"></div></div>
+        <div class="kpi"><div class="k-label">Alertas ativos</div><div class="k-value" id="kpi-alertas">—</div><div class="k-delta" id="kpi-alertas-sub"></div></div>
+        <div class="kpi"><div class="k-label">Leituras registradas</div><div class="k-value" id="kpi-leituras">—</div><div class="k-delta">total do equipamento selecionado</div></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Cadastrar equipamento</div>
+        <div class="form-row">
+          <input id="novo-tag" placeholder="TAG (ex.: TRN-01)">
+          <input id="novo-nome" placeholder="Nome">
+          <input id="novo-setor" placeholder="Setor">
+          <input id="novo-linha" placeholder="Linha de produção">
+          <input id="novo-potencia" type="number" placeholder="Potência (W)">
+          <input id="novo-limite" type="number" placeholder="Limite (kWh)">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="criarEquipamento()">Cadastrar</button>
+      </div>
+
+      <div class="section-title" style="margin-bottom:12px">Equipamentos · dados ao vivo da API</div>
+      <div class="grid-machines" id="grid-maquinas"></div>
+
+      <div class="card" id="sec-consumo" style="display:none">
+        <div class="section-title">Histórico de consumo — <span class="mono" id="consumo-tag"></span>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sec-consumo').style.display='none'">Fechar</button>
+        </div>
+        <table>
+          <thead><tr><th>Data/hora</th><th>Consumo (kWh)</th><th>Temp (°C)</th><th>Vibração (mm/s)</th><th>Corrente (A)</th></tr></thead>
+          <tbody id="tbody-consumo"></tbody>
+        </table>
+        <div class="pager">
+          <button class="btn btn-ghost btn-sm" id="consumo-prev" onclick="mudarPaginaConsumo(-1)">← Anterior</button>
+          <span id="consumo-info"></span>
+          <button class="btn btn-ghost btn-sm" id="consumo-next" onclick="mudarPaginaConsumo(1)">Próxima →</button>
+        </div>
+      </div>
+
+      <div class="card" id="sec-alertas">
+        <div class="section-title">Alertas de consumo · ordenados por severidade</div>
+        <table>
+          <thead><tr><th>Severidade</th><th>Equipamento</th><th>Diagnóstico</th><th>Excesso</th><th>Quando</th><th></th></tr></thead>
+          <tbody id="tbody-alertas"></tbody>
+        </table>
+        <div class="pager">
+          <button class="btn btn-ghost btn-sm" id="alertas-prev" onclick="mudarPaginaAlertas(-1)">← Anterior</button>
+          <span id="alertas-info"></span>
+          <button class="btn btn-ghost btn-sm" id="alertas-next" onclick="mudarPaginaAlertas(1)">Próxima →</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const api = {
+  token: null, role: null, usuario: null,
+
+  async req(metodo, caminho, corpo) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (this.token) headers['Authorization'] = 'Bearer ' + this.token;
+    const resp = await fetch(caminho, {
+      method: metodo, headers,
+      body: corpo ? JSON.stringify(corpo) : undefined
+    });
+    if (resp.status === 204) return null;
+    let json = null;
+    try { json = await resp.json(); } catch {}
+    if (!resp.ok) {
+      // ProblemDetails do middleware (detail) ou erros de validação do FluentValidation (errors)
+      let msg = (json && (json.detail || json.title)) || ('Erro HTTP ' + resp.status);
+      if (json && json.errors) msg = Object.values(json.errors).flat().join(' ');
+      const erro = new Error(msg); erro.status = resp.status; throw erro;
+    }
+    return json;
+  }
+};
+
+let paginaConsumo = 1, equipamentoSelecionado = null, paginaAlertas = 1;
+
+function toast(msg, tipo) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (tipo === 'erro' ? 'toast-erro' : tipo === 'ok' ? 'toast-ok' : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 4500);
+}
+
+async function fazerLogin() {
+  const usuario = document.getElementById('inp-usuario').value;
+  const senha = document.getElementById('inp-senha').value;
+  document.getElementById('login-erro').textContent = '';
+  try {
+    const r = await api.req('POST', '/api/auth/login', { usuario, senha });
+    api.token = r.token; api.role = r.role; api.usuario = r.usuario;
+    document.getElementById('user-nome').textContent = r.usuario;
+    document.getElementById('user-role').textContent = r.role;
+    document.getElementById('user-avatar').textContent = r.usuario.substring(0, 2).toUpperCase();
+    document.getElementById('login').classList.remove('active');
+    document.getElementById('app').classList.add('active');
+    carregarTudo();
+  } catch (e) {
+    document.getElementById('login-erro').textContent = e.message;
+  }
+}
+
+function sair() {
+  api.token = null;
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('login').classList.add('active');
+}
+
+async function carregarTudo() {
+  await Promise.all([carregarEquipamentos(), carregarAlertas()]);
+}
+
+async function carregarEquipamentos() {
+  const r = await api.req('GET', '/api/equipamentos?pageNumber=1&pageSize=50');
+  document.getElementById('kpi-maquinas').textContent = r.totalCount;
+  const ligados = r.items.filter(e => e.status === 'Ligado').length;
+  document.getElementById('kpi-maquinas-sub').textContent = ligados + ' ligadas · ' + (r.totalCount - ligados) + ' desligadas/manutenção';
+
+  const grid = document.getElementById('grid-maquinas');
+  grid.innerHTML = '';
+  for (const eq of r.items) {
+    const pillClasse = eq.status === 'Ligado' ? 's-ok' : eq.status === 'Desligado' ? 's-muted' : 's-warn';
+    const podeDesligar = api.role === 'Gestor' && eq.status === 'Ligado';
+    const card = document.createElement('div');
+    card.className = 'm-card';
+    card.innerHTML = `
+      <div class="m-top"><span class="tag-plate">${eq.tag}</span><span class="status ${pillClasse}">${eq.status}</span></div>
+      <h3>${eq.nome}</h3>
+      <div class="m-sub">${eq.fabricante} ${eq.modelo} · ${eq.setor}${eq.linhaProducao ? ' · ' + eq.linhaProducao : ''}</div>
+      <div class="m-meta">limite <b>${eq.limiteConsumoKwh.toFixed(1)} kWh</b> · potência <b>${(eq.potenciaNominalWatts / 1000).toFixed(1)} kW</b></div>
+      <div class="m-actions">
+        <button class="btn btn-ghost btn-sm" onclick="simularLeitura('${eq.tag}', ${eq.limiteConsumoKwh})">▸ Simular leitura</button>
+        <button class="btn btn-ghost btn-sm" onclick="verConsumo(${eq.id}, '${eq.tag}')">Consumo</button>
+        <button class="btn btn-crit btn-sm" ${podeDesligar ? '' : 'disabled'} onclick="desligar(${eq.id}, '${eq.tag}')">Desligar</button>
+      </div>`;
+    grid.appendChild(card);
+  }
+  if (r.items.length === 0)
+    grid.innerHTML = '<div class="empty">Nenhum equipamento cadastrado — use o formulário acima.</div>';
+}
+
+async function criarEquipamento() {
+  try {
+    const corpo = {
+      tag: document.getElementById('novo-tag').value,
+      nome: document.getElementById('novo-nome').value,
+      fabricante: 'Genérico', modelo: '—',
+      setor: document.getElementById('novo-setor').value,
+      linhaProducao: document.getElementById('novo-linha').value,
+      potenciaNominalWatts: parseFloat(document.getElementById('novo-potencia').value) || 0,
+      limiteConsumoKwh: parseFloat(document.getElementById('novo-limite').value) || 0
+    };
+    const eq = await api.req('POST', '/api/equipamentos', corpo);
+    toast(`Equipamento ${eq.tag} cadastrado.`, 'ok');
+    carregarEquipamentos();
+  } catch (e) { toast(e.message, 'erro'); }
+}
+
+async function simularLeitura(tag, limite) {
+  // Consumo aleatório entre 50% e 180% do limite: às vezes normal, às vezes dispara alerta.
+  const consumo = +(limite * (0.5 + Math.random() * 1.3)).toFixed(2);
+  try {
+    const r = await api.req('POST', '/api/leituras', {
+      equipamentoTag: tag,
+      consumoKwh: consumo,
+      temperaturaCelsius: +(55 + Math.random() * 45).toFixed(1),
+      vibracaoMmPorSegundo: +(1 + Math.random() * 7).toFixed(1),
+      correnteAmperes: +(70 + Math.random() * 30).toFixed(1),
+      dataHoraLeitura: new Date().toISOString()
+    });
+    if (r.alertaGerado)
+      toast(`⚠ ${tag}: ${consumo} kWh — ALERTA ${r.alerta.severidade.toUpperCase()} (${r.alerta.excessoPercentual}% acima do limite)`, 'erro');
+    else
+      toast(`${tag}: leitura de ${consumo} kWh registrada — dentro do limite.`, 'ok');
+    carregarAlertas();
+    if (equipamentoSelecionado && equipamentoSelecionado.tag === tag) verConsumo(equipamentoSelecionado.id, tag);
+  } catch (e) { toast(e.message, 'erro'); }
+}
+
+async function verConsumo(id, tag, pagina = 1) {
+  equipamentoSelecionado = { id, tag };
+  paginaConsumo = pagina;
+  const r = await api.req('GET', `/api/equipamentos/${id}/consumo?pageNumber=${pagina}&pageSize=8`);
+  document.getElementById('sec-consumo').style.display = 'block';
+  document.getElementById('consumo-tag').textContent = tag;
+  document.getElementById('kpi-leituras').textContent = r.totalCount;
+  const tbody = document.getElementById('tbody-consumo');
+  tbody.innerHTML = r.items.map(l => `
+    <tr>
+      <td class="mono">${new Date(l.dataHoraLeitura).toLocaleString('pt-BR')}</td>
+      <td class="mono"><b>${l.consumoKwh.toFixed(2)}</b></td>
+      <td class="mono">${l.temperaturaCelsius ?? '—'}</td>
+      <td class="mono">${l.vibracaoMmPorSegundo ?? '—'}</td>
+      <td class="mono">${l.correnteAmperes ?? '—'}</td>
+    </tr>`).join('') || '<tr><td colspan="5" class="empty">Sem leituras ainda.</td></tr>';
+  document.getElementById('consumo-info').textContent = `página ${r.pageNumber} de ${Math.max(r.totalPages, 1)} · ${r.totalCount} leituras`;
+  document.getElementById('consumo-prev').disabled = !r.hasPreviousPage;
+  document.getElementById('consumo-next').disabled = !r.hasNextPage;
+}
+
+function mudarPaginaConsumo(delta) {
+  if (equipamentoSelecionado)
+    verConsumo(equipamentoSelecionado.id, equipamentoSelecionado.tag, paginaConsumo + delta);
+}
+
+async function desligar(id, tag) {
+  if (!confirm(`Enviar comando de desligamento remoto para ${tag}?`)) return;
+  try {
+    const r = await api.req('POST', `/api/equipamentos/${id}/comando-desligamento`,
+      { motivo: 'Desligamento via dashboard — economia de energia' });
+    toast(`Comando ${r.status} para ${tag}, solicitado por ${r.solicitadoPor}.`, 'ok');
+    carregarEquipamentos();
+  } catch (e) {
+    toast((e.status === 403 ? 'Permissão negada (role Gestor exigida): ' : '') + e.message, 'erro');
+  }
+}
+
+async function carregarAlertas(pagina = 1) {
+  paginaAlertas = pagina;
+  const r = await api.req('GET', `/api/alertas?pageNumber=${pagina}&pageSize=8`);
+  const ativos = await api.req('GET', '/api/alertas?resolvido=false&pageNumber=1&pageSize=1');
+
+  document.getElementById('kpi-alertas').textContent = ativos.totalCount;
+  document.getElementById('kpi-alertas-sub').textContent = r.totalCount + ' no histórico total';
+  const badge = document.getElementById('badge-alertas');
+  badge.style.display = ativos.totalCount > 0 ? 'inline-block' : 'none';
+  badge.textContent = ativos.totalCount;
+
+  const tbody = document.getElementById('tbody-alertas');
+  tbody.innerHTML = r.items.map(a => {
+    const pill = a.resolvido ? 's-muted' : a.severidade === 'Critica' ? 's-crit' : a.severidade === 'Alta' ? 's-warn' : 's-ok';
+    const rotulo = a.resolvido ? 'Resolvido' : a.severidade;
+    return `
+    <tr>
+      <td><span class="status ${pill}">${rotulo}</span></td>
+      <td><span class="tag-plate">${a.equipamentoTag}</span></td>
+      <td style="max-width:380px">${a.mensagem}</td>
+      <td class="mono"><b>+${a.excessoPercentual}%</b></td>
+      <td class="mono">${new Date(a.dataHoraCriacao).toLocaleString('pt-BR')}</td>
+      <td>${a.resolvido ? '' : `<button class="btn btn-ghost btn-sm" onclick="resolverAlerta(${a.id})">Resolver</button>`}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" class="empty">Nenhum alerta — a planta está dentro dos limites. ✓</td></tr>';
+
+  document.getElementById('alertas-info').textContent = `página ${r.pageNumber} de ${Math.max(r.totalPages, 1)} · ${r.totalCount} alertas`;
+  document.getElementById('alertas-prev').disabled = !r.hasPreviousPage;
+  document.getElementById('alertas-next').disabled = !r.hasNextPage;
+}
+
+function mudarPaginaAlertas(delta) { carregarAlertas(paginaAlertas + delta); }
+
+async function resolverAlerta(id) {
+  try {
+    await api.req('PATCH', `/api/alertas/${id}/resolver`);
+    toast('Alerta resolvido.', 'ok');
+    carregarAlertas(paginaAlertas);
+  } catch (e) { toast(e.message, 'erro'); }
+}
+
+document.getElementById('inp-senha').addEventListener('keydown', e => { if (e.key === 'Enter') fazerLogin(); });
+</script>
+</body>
+</html>

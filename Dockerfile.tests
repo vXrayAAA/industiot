@@ -1,0 +1,27 @@
+# =====================================================================
+# Imagem dos testes de aceitação BDD (Reqnroll + Gherkin)
+# Roda os mesmos cenários do modo InProcess, mas contra a API publicada
+# no container "api" (SQL Server real), via API_BASE_URL.
+# Uso: ver docker-compose.tests.yml e README-TESTES.md
+# =====================================================================
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS testes
+WORKDIR /src
+
+# Restore em camada própria (cache): só muda quando os .csproj mudam.
+COPY IndustIoT.Api/IndustIoT.Api.csproj IndustIoT.Api/
+COPY IndustIoT.AcceptanceTests/IndustIoT.AcceptanceTests.csproj IndustIoT.AcceptanceTests/
+RUN dotnet restore IndustIoT.AcceptanceTests/IndustIoT.AcceptanceTests.csproj
+
+COPY IndustIoT.Api/ IndustIoT.Api/
+COPY IndustIoT.AcceptanceTests/ IndustIoT.AcceptanceTests/
+RUN dotnet build IndustIoT.AcceptanceTests/IndustIoT.AcceptanceTests.csproj -c Release --no-restore
+
+COPY scripts/docker-test-entrypoint.sh /usr/local/bin/run-bdd
+RUN sed -i 's/\r$//' /usr/local/bin/run-bdd && chmod +x /usr/local/bin/run-bdd
+
+ENV API_BASE_URL=http://api:8080 \
+    API_WAIT_SECONDS=180 \
+    DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1
+
+ENTRYPOINT ["run-bdd"]

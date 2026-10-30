@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://industiot.fiap/schemas/login-response.schema.json",
+  "title": "login-response",
+  "description": "Resposta de POST /api/auth/login",
+  "type": "object",
+  "required": [
+    "token",
+    "usuario",
+    "role",
+    "expiraEm"
+  ],
+  "properties": {
+    "token": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$",
+      "description": "JWT (header.payload.signature)"
+    },
+    "usuario": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "Gestor",
+        "Operador"
+      ]
+    },
+    "expiraEm": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
+    }
+  },
+  "additionalProperties": false
+}

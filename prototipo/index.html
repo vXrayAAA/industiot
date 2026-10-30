@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IndústIoT — Protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F5F7; --surface:#FFFFFF; --ink:#1A1D21; --muted:#697077; --line:#E1E4E8;
+  --panel:#16191E; --panel-ink:#C9CED4; --panel-line:#2A2F36;
+  --accent:#E8590C; --ok:#2F9E44; --warn:#F08C00; --crit:#E03131;
+  --ok-bg:#EBFBEE; --warn-bg:#FFF4E0; --crit-bg:#FFEBEB;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+.mono{font-family:'IBM Plex Mono',monospace}
+button{font-family:inherit;cursor:pointer}
+.screen{display:none}
+.screen.active{display:block}
+
+/* ===== LOGIN ===== */
+#login.active{display:flex;min-height:100vh;align-items:center;justify-content:center;background:var(--panel)}
+.login-card{background:var(--surface);border-radius:14px;padding:40px;width:380px;max-width:92vw}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.brand-mark{width:36px;height:36px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-family:'IBM Plex Mono',monospace;font-size:15px}
+.brand h1{font-size:22px;font-weight:700;letter-spacing:-0.3px}
+.brand h1 span{color:var(--accent)}
+.login-card p.sub{color:var(--muted);margin-bottom:26px;font-size:13px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.field input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#FAFBFC}
+.field input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border-radius:8px;border:none;font-weight:600;font-size:14px}
+.btn-primary{background:var(--accent);color:#fff;width:100%}
+.btn-primary:hover{background:#D6500A}
+.btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn-ghost:hover{background:#F0F1F3}
+.login-foot{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
+.login-foot a{color:var(--accent);text-decoration:none}
+
+/* ===== APP SHELL ===== */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--panel);color:var(--panel-ink);padding:20px 12px;display:flex;flex-direction:column;flex-shrink:0}
+.sidebar .brand{padding:0 10px;margin-bottom:28px}
+.sidebar .brand h1{font-size:17px;color:#fff}
+.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#5B636C;padding:0 10px;margin:14px 0 6px}
+.nav-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;color:var(--panel-ink);padding:10px;border-radius:8px;font-size:13.5px;font-weight:500;margin-bottom:2px}
+.nav-item:hover{background:var(--panel-line);color:#fff}
+.nav-item.current{background:var(--panel-line);color:#fff;box-shadow:inset 3px 0 0 var(--accent)}
+.nav-item .badge{margin-left:auto;background:var(--crit);color:#fff;font-size:11px;font-weight:600;border-radius:99px;padding:1px 7px}
+.sidebar-foot{margin-top:auto;padding:12px 10px;border-top:1px solid var(--panel-line);font-size:12px;display:flex;align-items:center;gap:10px}
+.avatar{width:30px;height:30px;border-radius:50%;background:#3B434C;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;font-size:12px}
+.main{flex:1;padding:28px 32px;min-width:0}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.page-head h2{font-size:21px;font-weight:700;letter-spacing:-0.3px}
+.page-head .crumb{font-size:12px;color:var(--muted);margin-bottom:4px}
+.page-head .crumb a{color:var(--accent);text-decoration:none;cursor:pointer}
+
+/* ===== COMPONENTS ===== */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.kpi .k-label{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:6px}
+.kpi .k-value{font-size:26px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-0.5px}
+.kpi .k-delta{font-size:12px;margin-top:4px;font-weight:500}
+.up{color:var(--ok)} .down{color:var(--crit)} .flat{color:var(--muted)}
+
+.tag-plate{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;border:1.5px solid var(--ink);border-radius:4px;padding:2px 8px;background:#FFFDF5;letter-spacing:.5px;display:inline-block}
+
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:99px;padding:3px 10px}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.s-ok{background:var(--ok-bg);color:var(--ok)}
+.s-warn{background:var(--warn-bg);color:var(--warn)}
+.s-crit{background:var(--crit-bg);color:var(--crit)}
+
+.grid-machines{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.m-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;text-align:left;font-family:inherit;transition:box-shadow .15s, transform .15s}
+.m-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-2px)}
+.m-card .m-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.m-card h3{font-size:14.5px;font-weight:600;margin-bottom:2px}
+.m-card .m-sub{font-size:12px;color:var(--muted);margin-bottom:12px}
+.m-bottom{display:flex;justify-content:space-between;align-items:center}
+.health{display:flex;align-items:center;gap:8px}
+.ring{width:44px;height:44px}
+.ring text{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;fill:var(--ink)}
+.m-sensor{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.5}
+.m-sensor b{color:var(--ink);font-weight:600}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px}
+
+.sensor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px}
+.sensor-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.sensor-card .s-name{font-size:12px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:8px}
+.sensor-card .s-val{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600}
+.sensor-card .s-val small{font-size:13px;color:var(--muted);font-weight:400}
+.spark{margin-top:10px;width:100%;height:40px}
+
+.predict{border-left:4px solid var(--crit);background:var(--crit-bg);border-radius:8px;padding:16px 18px;margin-bottom:18px;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.predict .p-icon{font-size:20px}
+.predict h4{font-size:14px;font-weight:700;color:var(--crit);margin-bottom:4px}
+.predict p{font-size:13px;color:#7A2E2E;max-width:560px}
+.predict .btn{margin-left:auto;background:var(--crit);color:#fff}
+
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);text-align:left;padding:11px 14px;background:#FAFBFC;border-bottom:1px solid var(--line)}
+td{padding:13px 14px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.clickable:hover{background:#FAFBFC;cursor:pointer}
+.t-action{font-size:12.5px;color:var(--accent);font-weight:600;background:none;border:none}
+
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bars{display:flex;align-items:flex-end;gap:14px;height:160px;padding-top:10px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.bar{width:100%;max-width:48px;border-radius:6px 6px 0 0;background:#CBD2D9}
+.bar.hl{background:var(--accent)}
+.bar-label{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.bar-val{font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle}
+.dot-crit{background:var(--crit)} .dot-warn{background:var(--warn)} .dot-ok{background:var(--ok)}
+
+.proto-note{position:fixed;bottom:12px;right:12px;background:var(--ink);color:#fff;font-size:11px;padding:6px 12px;border-radius:99px;opacity:.75;font-family:'IBM Plex Mono',monospace;pointer-events:none;z-index:9}
+
+@media(max-width:760px){
+  .sidebar{width:64px;padding:16px 8px}
+  .sidebar .brand h1,.nav-item span.txt,.nav-label,.sidebar-foot .who,.nav-item .badge{display:none}
+  .main{padding:18px 14px}
+  .report-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="proto-note">protótipo navegável · IndústIoT</div>
+
+<!-- ================= LOGIN ================= -->
+<section id="login" class="screen active">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-mark">∿</div>
+      <h1>Indúst<span>IoT</span></h1>
+    </div>
+    <p class="sub">Monitoramento preditivo para a sua planta industrial</p>
+    <div class="field">
+      <label>E-mail corporativo</label>
+      <input type="email" value="gestor@metalurgicasp.com.br">
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" value="••••••••••">
+    </div>
+    <button class="btn btn-primary" onclick="go('dashboard')">Entrar na plataforma</button>
+    <div class="login-foot">Esqueceu a senha? <a href="#" onclick="return false;">Recuperar acesso</a></div>
+  </div>
+</section>
+
+<!-- ================= SHELL (telas internas) ================= -->
+<div id="app" style="display:none">
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">∿</div>
+      <h1>Indúst<span style="color:var(--accent)">IoT</span></h1>
+    </div>
+    <div class="nav-label">Operação</div>
+    <button class="nav-item" data-nav="dashboard" onclick="go('dashboard')"><span class="txt">Dashboard</span></button>
+    <button class="nav-item" data-nav="alertas" onclick="go('alertas')"><span class="txt">Alertas</span><span class="badge">3</span></button>
+    <button class="nav-item" data-nav="relatorios" onclick="go('relatorios')"><span class="txt">Relatórios</span></button>
+    <div class="nav-label">Sistema</div>
+    <button class="nav-item" onclick="alert('Tela fora do escopo deste protótipo.')"><span class="txt">Sensores & Gateways</span></button>
+    <button class="nav-item" onclick="alert('Tela fora do escopo deste protótipo.')"><span class="txt">Equipe</span></button>
+    <div class="sidebar-foot">
+      <div class="avatar">RM</div>
+      <div class="who">Rodrigo M.<br><small style="color:#7B838C">Gestor de Manutenção</small></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ===== DASHBOARD ===== -->
+    <section id="dashboard" class="screen">
+      <div class="page-head">
+        <div>
+          <h2>Visão geral da planta</h2>
+          <div style="font-size:13px;color:var(--muted);margin-top:3px">Metalúrgica SP · Unidade Osasco · atualizado há 12 s</div>
+        </div>
+        <button class="btn btn-ghost" onclick="alert('Filtro de linhas/setores (fora do escopo do protótipo)')">Filtrar por setor ▾</button>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="k-label">Máquinas monitoradas</div><div class="k-value">24</div><div class="k-delta flat">4 linhas de produção</div></div>
+        <div class="kpi"><div class="k-label">Saúde média da planta</div><div class="k-value">87<small style="font-size:15px">%</small></div><div class="k-delta up">▲ 2% vs. semana anterior</div></div>
+        <div class="kpi"><div class="k-label">Alertas ativos</div><div class="k-value" style="color:var(--crit)">3</div><div class="k-delta down">1 crítico</div></div>
+        <div class="kpi"><div class="k-label">Paradas evitadas (mês)</div><div class="k-value">5</div><div class="k-delta up">≈ R$ 142 mil preservados</div></div>
+      </div>
+
+      <div class="section-title">Equipamentos · clique para ver detalhes</div>
+      <div class="grid-machines">
+
+        <button class="m-card" onclick="go('maquina')">
+          <div class="m-top"><span class="tag-plate">CMP-02</span><span class="status s-crit">Crítico</span></div>
+          <h3>Compressor de ar — Linha 2</h3>
+          <div class="m-sub">Atlas Copco GA 55 · Setor utilidades</div>
+          <div class="m-bottom">
+            <div class="health">
+              <svg class="ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="#EEE" stroke-width="5"/><circle cx="22" cy="22" r="18" fill="none" stroke="var(--crit)" stroke-width="5" stroke-dasharray="70 113" stroke-linecap="round" transform="rotate(-90 22 22)"/><text x="22" y="26" text-anchor="middle">62</text></svg>
+              <span style="font-size:12px;color:var(--muted)">saúde</span>
+            </div>
+            <div class="m-sensor">vib <b>7,4 mm/s</b><br>temp <b>92 °C</b></div>
+          </div>
+        </button>
+
+        <button class="m-card" onclick="alert('No protótipo, apenas a máquina CMP-02 tem tela de detalhe.')">
+          <div class="m-top"><span class="tag-plate">TRN-01</span><span class="status s-warn">Atenção</span></div>
+          <h3>Torno CNC — Linha 1</h3>
+          <div class="m-sub">Romi GL 240 · Usinagem</div>
+          <div class="m-bottom">
+            <div class="health">
+              <svg class="ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="#EEE" stroke-width="5"/><circle cx="22" cy="22" r="18" fill="none" stroke="var(--warn)" stroke-width="5" stroke-dasharray="88 113" stroke-linecap="round" transform="rotate(-90 22 22)"/><text x="22" y="26" text-anchor="middle">78</text></svg>
+              <span style="font-size:12px;color:var(--muted)">saúde</span>
+            </div>
+            <div class="m-sensor">vib <b>4,1 mm/s</b><br>temp <b>71 °C</b></div>
+          </div>
+        </button>
+
+        <button class="m-card" onclick="alert('No protótipo, apenas a máquina CMP-02 tem tela de detalhe.')">
+          <div class="m-top"><span class="tag-plate">INJ-03</span><span class="status s-ok">Normal</span></div>
+          <h3>Injetora plástica — Linha 3</h3>
+          <div class="m-sub">Haitian MA 1600 · Injeção</div>
+          <div class="m-bottom">
+            <div class="health">
+              <svg class="ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="#EEE" stroke-width="5"/><circle cx="22" cy="22" r="18" fill="none" stroke="var(--ok)" stroke-width="5" stroke-dasharray="107 113" stroke-linecap="round" transform="rotate(-90 22 22)"/><text x="22" y="26" text-anchor="middle">95</text></svg>
+              <span style="font-size:12px;color:var(--muted)">saúde</span>
+            </div>
+            <div class="m-sensor">vib <b>1,8 mm/s</b><br>temp <b>58 °C</b></div>
+          </div>
+        </button>
+
+        <button class="m-card" onclick="alert('No protótipo, apenas a máquina CMP-02 tem tela de detalhe.')">
+          <div class="m-top"><span class="tag-plate">MTR-07</span><span class="status s-ok">Normal</span></div>
+          <h3>Motor esteira — Linha 2</h3>
+          <div class="m-sub">WEG W22 15 cv · Transporte</div>
+          <div class="m-bottom">
+            <div class="health">
+              <svg class="ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="#EEE" stroke-width="5"/><circle cx="22" cy="22" r="18" fill="none" stroke="var(--ok)" stroke-width="5" stroke-dasharray="104 113" stroke-linecap="round" transform="rotate(-90 22 22)"/><text x="22" y="26" text-anchor="middle">92</text></svg>
+              <span style="font-size:12px;color:var(--muted)">saúde</span>
+            </div>
+            <div class="m-sensor">vib <b>2,2 mm/s</b><br>corr <b>18,4 A</b></div>
+          </div>
+        </button>
+
+      </div>
+    </section>
+
+    <!-- ===== MÁQUINA (detalhe) ===== -->
+    <section id="maquina" class="screen">
+      <div class="page-head">
+        <div>
+          <div class="crumb"><a onclick="go('dashboard')">← Dashboard</a> / Equipamento</div>
+          <h2 style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span class="tag-plate" style="font-size:14px;padding:4px 12px">CMP-02</span>
+            Compressor de ar — Linha 2
+            <span class="status s-crit">Crítico</span>
+          </h2>
+        </div>
+        <button class="btn btn-ghost" onclick="alert('Histórico completo (fora do escopo do protótipo)')">Histórico ▾</button>
+      </div>
+
+      <div class="predict">
+        <div>
+          <h4>Predição: falha de rolamento em ≈ 12 dias</h4>
+          <p>O modelo detectou aumento progressivo de vibração em 3,2× nas últimas 72 h, padrão compatível com desgaste de rolamento do estágio 1. Recomendação: agendar intervenção na próxima janela de parada programada (sáb, 20/06).</p>
+        </div>
+        <button class="btn" onclick="alert('Ordem de serviço OS-2026-0148 criada e enviada à equipe de manutenção.')">Criar ordem de serviço</button>
+      </div>
+
+      <div class="sensor-grid">
+        <div class="sensor-card">
+          <div class="s-name">VIBRAÇÃO (RMS) <span class="status s-crit" style="padding:1px 8px">alto</span></div>
+          <div class="s-val">7,4 <small>mm/s</small></div>
+          <svg class="spark" viewBox="0 0 200 40" preserveAspectRatio="none"><polyline fill="none" stroke="var(--crit)" stroke-width="2" points="0,32 25,30 50,31 75,28 100,26 125,22 150,16 175,10 200,6"/><line x1="0" y1="14" x2="200" y2="14" stroke="#E03131" stroke-width="1" stroke-dasharray="4 3" opacity=".4"/></svg>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px" class="mono">limite ISO 10816: 4,5 mm/s</div>
+        </div>
+        <div class="sensor-card">
+          <div class="s-name">TEMPERATURA <span class="status s-warn" style="padding:1px 8px">subindo</span></div>
+          <div class="s-val">92 <small>°C</small></div>
+          <svg class="spark" viewBox="0 0 200 40" preserveAspectRatio="none"><polyline fill="none" stroke="var(--warn)" stroke-width="2" points="0,28 25,27 50,28 75,26 100,24 125,22 150,20 175,17 200,15"/></svg>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px" class="mono">faixa nominal: 70–95 °C</div>
+        </div>
+        <div class="sensor-card">
+          <div class="s-name">CORRENTE <span class="status s-ok" style="padding:1px 8px">normal</span></div>
+          <div class="s-val">86,2 <small>A</small></div>
+          <svg class="spark" viewBox="0 0 200 40" preserveAspectRatio="none"><polyline fill="none" stroke="var(--ok)" stroke-width="2" points="0,22 25,20 50,23 75,21 100,22 125,20 150,22 175,21 200,22"/></svg>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px" class="mono">nominal: 84 A · 380 V</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Linha do tempo do equipamento</div>
+        <table>
+          <tr><td class="mono" style="width:120px;color:var(--muted)">hoje 09:12</td><td><span class="dot dot-crit"></span>Alerta crítico de vibração emitido pelo modelo preditivo</td></tr>
+          <tr><td class="mono" style="color:var(--muted)">ontem 14:30</td><td><span class="dot dot-warn"></span>Tendência de aquecimento acima do padrão histórico</td></tr>
+          <tr><td class="mono" style="color:var(--muted)">07/06</td><td><span class="dot dot-ok"></span>Manutenção preventiva concluída — troca de filtros (OS-2026-0131)</td></tr>
+          <tr><td class="mono" style="color:var(--muted)">28/05</td><td><span class="dot dot-ok"></span>Sensores recalibrados pelo gateway GW-04</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== ALERTAS ===== -->
+    <section id="alertas" class="screen">
+      <div class="page-head">
+        <div>
+          <h2>Alertas preditivos</h2>
+          <div style="font-size:13px;color:var(--muted);margin-top:3px">3 alertas ativos · ordenados por severidade</div>
+        </div>
+        <button class="btn btn-ghost" onclick="alert('Exportação CSV (fora do escopo do protótipo)')">Exportar CSV</button>
+      </div>
+      <table>
+        <thead><tr><th>Severidade</th><th>Equipamento</th><th>Diagnóstico do modelo</th><th>Prazo estimado</th><th></th></tr></thead>
+        <tbody>
+          <tr class="clickable" onclick="go('maquina')">
+            <td><span class="status s-crit">Crítico</span></td>
+            <td><span class="tag-plate">CMP-02</span> Compressor L2</td>
+            <td>Desgaste de rolamento — vibração 3,2× acima do baseline</td>
+            <td class="mono">≈ 12 dias</td>
+            <td><button class="t-action">Ver detalhe →</button></td>
+          </tr>
+          <tr class="clickable" onclick="alert('No protótipo, apenas o alerta do CMP-02 abre o detalhe.')">
+            <td><span class="status s-warn">Atenção</span></td>
+            <td><span class="tag-plate">TRN-01</span> Torno CNC L1</td>
+            <td>Desbalanceamento leve no eixo-árvore em rotações altas</td>
+            <td class="mono">≈ 30 dias</td>
+            <td><button class="t-action">Ver detalhe →</button></td>
+          </tr>
+          <tr class="clickable" onclick="alert('No protótipo, apenas o alerta do CMP-02 abre o detalhe.')">
+            <td><span class="status s-warn">Atenção</span></td>
+            <td><span class="tag-plate">BMB-05</span> Bomba hidráulica L3</td>
+            <td>Assinatura de cavitação intermitente detectada</td>
+            <td class="mono">monitorando</td>
+            <td><button class="t-action">Ver detalhe →</button></td>
+          </tr>
+          <tr style="opacity:.55">
+            <td><span class="status s-ok">Resolvido</span></td>
+            <td><span class="tag-plate">MTR-07</span> Motor esteira L2</td>
+            <td>Sobrecorrente — corrigida após reaperto de conexões (OS-2026-0127)</td>
+            <td class="mono">—</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===== RELATÓRIOS ===== -->
+    <section id="relatorios" class="screen">
+      <div class="page-head">
+        <div>
+          <h2>Relatórios de manutenção</h2>
+          <div style="font-size:13px;color:var(--muted);margin-top:3px">Resultados de manutenção preditiva · últimos 6 meses</div>
+        </div>
+        <button class="btn btn-primary" style="width:auto" onclick="alert('Relatório PDF gerado e enviado ao seu e-mail.')">Gerar relatório PDF</button>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="k-label">MTBF (médio)</div><div class="k-value">412 h</div><div class="k-delta up">▲ 18% no semestre</div></div>
+        <div class="kpi"><div class="k-label">MTTR (médio)</div><div class="k-value">3,2 h</div><div class="k-delta up">▼ 27% no semestre</div></div>
+        <div class="kpi"><div class="k-label">Custo evitado</div><div class="k-value">R$ 612 mil</div><div class="k-delta flat">acumulado 2026</div></div>
+      </div>
+
+      <div class="report-grid">
+        <div class="card">
+          <div class="section-title">Paradas não planejadas por mês</div>
+          <div class="bars">
+            <div class="bar-wrap"><span class="bar-val">9</span><div class="bar" style="height:90%"></div><span class="bar-label">jan</span></div>
+            <div class="bar-wrap"><span class="bar-val">7</span><div class="bar" style="height:70%"></div><span class="bar-label">fev</span></div>
+            <div class="bar-wrap"><span class="bar-val">6</span><div class="bar" style="height:60%"></div><span class="bar-label">mar</span></div>
+            <div class="bar-wrap"><span class="bar-val">4</span><div class="bar" style="height:40%"></div><span class="bar-label">abr</span></div>
+            <div class="bar-wrap"><span class="bar-val">3</span><div class="bar" style="height:30%"></div><span class="bar-label">mai</span></div>
+            <div class="bar-wrap"><span class="bar-val">1</span><div class="bar hl" style="height:12%"></div><span class="bar-label">jun</span></div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:12px">Queda de 89% desde a implantação do IndústIoT em janeiro.</div>
+        </div>
+        <div class="card">
+          <div class="section-title">Ordens de serviço geradas pela plataforma</div>
+          <table style="border:none">
+            <tr><td class="mono" style="color:var(--muted)">OS-2026-0148</td><td><span class="tag-plate">CMP-02</span></td><td>Rolamento est. 1</td><td><span class="status s-warn">Agendada</span></td></tr>
+            <tr><td class="mono" style="color:var(--muted)">OS-2026-0131</td><td><span class="tag-plate">CMP-02</span></td><td>Troca de filtros</td><td><span class="status s-ok">Concluída</span></td></tr>
+            <tr><td class="mono" style="color:var(--muted)">OS-2026-0127</td><td><span class="tag-plate">MTR-07</span></td><td>Reaperto elétrico</td><td><span class="status s-ok">Concluída</span></td></tr>
+            <tr><td class="mono" style="color:var(--muted)">OS-2026-0119</td><td><span class="tag-plate">BMB-05</span></td><td>Inspeção cavitação</td><td><span class="status s-ok">Concluída</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+</div>
+
+<script>
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const isLogin = id==='login';
+  document.getElementById('app').style.display = isLogin ? 'none':'block';
+  if(isLogin){ document.getElementById('login').classList.add('active'); return; }
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-item[data-nav]').forEach(b=>{
+    b.classList.toggle('current', b.dataset.nav===id || (id==='maquina' && b.dataset.nav==='dashboard'));
+  });
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>

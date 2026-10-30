@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://industiot.fiap/schemas/comando.schema.json",
+  "title": "comando",
+  "description": "ComandoResponse — POST /api/equipamentos/{id}/comando-desligamento (trilha de auditoria)",
+  "type": "object",
+  "required": [
+    "id",
+    "equipamentoTag",
+    "tipo",
+    "status",
+    "solicitadoPor",
+    "motivo",
+    "dataHoraSolicitacao",
+    "dataHoraExecucao"
+  ],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "equipamentoTag": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,4}-\\d{2,3}$"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Desligamento",
+        "Religamento"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Enviado",
+        "Confirmado",
+        "Falhou"
+      ]
+    },
+    "solicitadoPor": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Usuário do JWT — auditoria"
+    },
+    "motivo": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 500
+    },
+    "dataHoraSolicitacao": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
+    },
+    "dataHoraExecucao": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
+    }
+  },
+  "additionalProperties": false
+}

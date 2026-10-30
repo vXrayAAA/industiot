@@ -1,0 +1,20 @@
+# Build
+**/bin/
+**/obj/
+*.feature.cs
+
+# IDE
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+
+# Resultados de testes (gerados a cada execução / artefatos do CI)
+TestResults/
+
+# Pacotes de entrega gerados a partir deste repositório
+*.zip
+
+# Certificado usado só para build em sandbox
+.sandbox-ca.crt

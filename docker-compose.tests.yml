@@ -1,0 +1,19 @@
+# Sobe SQL Server + API (docker-compose.yml) e um container que roda os testes BDD contra a API.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.tests.yml up --build \
+#     --abort-on-container-exit --exit-code-from acceptance-tests
+#
+# Relatórios (TRX, JUnit, HTML) ficam em ./TestResults/docker
+services:
+  acceptance-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.tests
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      API_BASE_URL: http://api:8080
+      API_WAIT_SECONDS: "180"
+    volumes:
+      - ./TestResults/docker:/test-results

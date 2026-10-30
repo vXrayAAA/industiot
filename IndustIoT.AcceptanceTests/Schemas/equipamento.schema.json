@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://industiot.fiap/schemas/equipamento.schema.json",
+  "title": "equipamento",
+  "description": "EquipamentoResponse — POST/GET /api/equipamentos",
+  "type": "object",
+  "required": [
+    "id",
+    "tag",
+    "nome",
+    "fabricante",
+    "modelo",
+    "setor",
+    "linhaProducao",
+    "potenciaNominalWatts",
+    "limiteConsumoKwh",
+    "status",
+    "dataCadastro"
+  ],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "tag": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,4}-\\d{2,3}$"
+    },
+    "nome": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fabricante": {
+      "type": "string"
+    },
+    "modelo": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "linhaProducao": {
+      "type": "string"
+    },
+    "potenciaNominalWatts": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "limiteConsumoKwh": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ligado",
+        "Desligado",
+        "EmManutencao"
+      ]
+    },
+    "dataCadastro": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
+    }
+  },
+  "additionalProperties": false
+}

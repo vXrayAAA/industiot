@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://industiot.fiap/schemas/problem-details.schema.json",
+  "title": "problem-details",
+  "description": "ProblemDetails (RFC 7807) — erros 401/404/422 do middleware e do AuthController",
+  "type": "object",
+  "required": [
+    "title",
+    "status",
+    "detail"
+  ],
+  "properties": {
+    "type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "integer",
+      "enum": [
+        401,
+        403,
+        404,
+        422,
+        500
+      ]
+    },
+    "detail": {
+      "type": "string",
+      "minLength": 1
+    },
+    "instance": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Testes de aceitação BDD (Gherkin) da API IndústIoT.
+    - Reqnroll (sucessor open source do SpecFlow) gera os testes xUnit a partir dos .feature
+    - JsonSchema.Net valida o contrato (JSON Schema draft 2020-12) de cada resposta
+    - Dois modos de execução (ver README-TESTES.md):
+        * InProcess (padrão): API real em memória via WebApplicationFactory + EF InMemory
+        * Externo: define API_BASE_URL e os mesmos cenários rodam contra a API em Docker + SQL Server
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>IndustIoT.AcceptanceTests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Reqnroll.xUnit" Version="3.3.4" />
+    <PackageReference Include="JsonSchema.Net" Version="7.4.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.17" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.17" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="JunitXml.TestLogger" Version="6.1.0" />
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IndustIoT.Api\IndustIoT.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Contratos JSON Schema copiados para a saída: lidos em tempo de execução pelos steps. -->
+    <None Update="Schemas\*.schema.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="reqnroll.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

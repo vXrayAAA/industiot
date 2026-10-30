@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://industiot.fiap/schemas/leitura-registrada.schema.json",
+  "title": "leitura-registrada",
+  "description": "LeituraRegistradaResponse — POST /api/leituras. Se alertaGerado=true, alerta é obrigatório; se false, alerta é null.",
+  "type": "object",
+  "required": [
+    "leituraId",
+    "equipamentoTag",
+    "consumoKwh",
+    "dataHoraLeitura",
+    "alertaGerado",
+    "alerta"
+  ],
+  "properties": {
+    "leituraId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "equipamentoTag": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,4}-\\d{2,3}$"
+    },
+    "consumoKwh": {
+      "type": "number",
+      "minimum": 0
+    },
+    "dataHoraLeitura": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
+    },
+    "alertaGerado": {
+      "type": "boolean"
+    },
+    "alerta": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "alerta.schema.json"
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "if": {
+    "properties": {
+      "alertaGerado": {
+        "const": true
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "alerta": {
+        "$ref": "alerta.schema.json"
+      }
+    }
+  },
+  "else": {
+    "properties": {
+      "alerta": {
+        "type": "null"
+      }
+    }
+  }
+}

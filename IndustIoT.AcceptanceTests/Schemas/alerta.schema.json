@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://industiot.fiap/schemas/alerta.schema.json",
+  "title": "alerta",
+  "description": "AlertaResponse — GET /api/alertas e PATCH /api/alertas/{id}/resolver",
+  "type": "object",
+  "required": [
+    "id",
+    "equipamentoTag",
+    "severidade",
+    "consumoRegistradoKwh",
+    "limiteConfiguradoKwh",
+    "excessoPercentual",
+    "mensagem",
+    "dataHoraCriacao",
+    "resolvido"
+  ],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "equipamentoTag": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,4}-\\d{2,3}$"
+    },
+    "severidade": {
+      "type": "string",
+      "enum": [
+        "Atencao",
+        "Alta",
+        "Critica"
+      ]
+    },
+    "consumoRegistradoKwh": {
+      "type": "number",
+      "minimum": 0
+    },
+    "limiteConfiguradoKwh": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "excessoPercentual": {
+      "type": "number",
+      "minimum": 0
+    },
+    "mensagem": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dataHoraCriacao": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
+    },
+    "resolvido": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

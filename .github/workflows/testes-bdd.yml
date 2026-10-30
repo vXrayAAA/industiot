@@ -1,0 +1,93 @@
+# Pipeline de CI dos testes automatizados da API IndústIoT (ESG — eficiência energética)
+#  1) unit-e-integracao : build + testes xUnit existentes
+#  2) bdd-inprocess     : cenários Gherkin contra a API em memória (rápido, a cada push/PR)
+#  3) bdd-docker        : os MESMOS cenários contra API + SQL Server reais em containers
+name: Testes BDD - IndústIoT
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write   # publica o resultado dos testes na aba "Checks"
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+
+jobs:
+  unit-e-integracao:
+    name: Build + testes xUnit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet restore IndustIoT.sln
+      - run: dotnet build IndustIoT.sln --no-restore -c Release
+      - run: dotnet test IndustIoT.Tests --no-build -c Release --logger "trx;LogFileName=xunit.trx" --results-directory TestResults/xunit
+
+  bdd-inprocess:
+    name: BDD (InProcess)
+    needs: unit-e-integracao
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Executar cenários Gherkin
+        run: |
+          dotnet test IndustIoT.AcceptanceTests -c Release \
+            --results-directory TestResults/inprocess \
+            --logger "trx;LogFileName=resultado-bdd.trx" \
+            --logger "junit;LogFilePath=${{ github.workspace }}/TestResults/inprocess/junit-bdd.xml" \
+            --logger "console;verbosity=normal"
+      - name: Copiar relatório HTML do Reqnroll
+        if: always()
+        run: cp IndustIoT.AcceptanceTests/bin/Release/net8.0/TestResults/relatorio-bdd.* TestResults/inprocess/ || true
+      - name: Publicar resultado
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Cenários BDD (InProcess)
+          path: TestResults/inprocess/junit-bdd.xml
+          reporter: java-junit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relatorios-bdd-inprocess
+          path: TestResults/inprocess
+
+  bdd-docker:
+    name: BDD (API + SQL Server em Docker)
+    needs: bdd-inprocess
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Subir SQL Server + API e executar os cenários
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.tests.yml up --build \
+            --abort-on-container-exit --exit-code-from acceptance-tests
+      - name: Logs da API (diagnóstico)
+        if: failure()
+        run: docker compose -f docker-compose.yml -f docker-compose.tests.yml logs api
+      - name: Derrubar ambiente
+        if: always()
+        run: docker compose -f docker-compose.yml -f docker-compose.tests.yml down -v
+      - name: Publicar resultado
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Cenários BDD (Docker + SQL Server)
+          path: TestResults/docker/junit-bdd.xml
+          reporter: java-junit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relatorios-bdd-docker
+          path: TestResults/docker
