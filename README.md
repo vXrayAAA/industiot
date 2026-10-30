@@ -22,7 +22,7 @@ Inclui um **dashboard web** servido pela própria API, no estilo do protótipo I
 
 ### Equipe
 
-Nicolas Mantovani (RM 562306) · Rafaela Alves (RM 563377) · Giovanni Assunção Wanderley (RM 558985) · Othon Godoy (RM 563437) · Vinícius Branco (RM 565389)
+Nicolas Mantovani (RM 562306) · Giovanni Assunção Wanderley (RM 558985) · Othon Godoy (RM 563437) · Vinícius Branco (RM 565389)
 
 ## Arquitetura (MVVM)
 

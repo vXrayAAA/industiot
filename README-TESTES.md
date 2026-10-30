@@ -142,7 +142,6 @@ Os usuários de demonstração vêm de `IndustIoT.Api/appsettings.json`. Para ou
 | Integrante | RM |
 |---|---|
 | Nicolas Mantovani | 562306 |
-| Rafaela Alves | 563377 |
 | Giovanni Assunção Wanderley | 558985 |
 | Othon Godoy | 563437 |
 | Vinícius Branco | 565389 |
